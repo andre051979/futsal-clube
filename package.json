@@ -1,0 +1,6 @@
+{
+  "name": "festa-futsal2026",
+  "private": true,
+  "type": "module",
+  "engines": { "node": "22.x" }
+}
