@@ -137,6 +137,22 @@
     .steps-list { color: var(--text-soft); padding-left: 20px; margin-bottom: 14px; font-size: .95rem; }
     .steps-list li { margin-bottom: 4px; }
     .hp { position: absolute; left: -9999px; }
+    .link-consulta { display: inline-block; margin-top: 14px; color: var(--text-soft); background: none; border: none; font-size: .98rem; text-decoration: underline; cursor: pointer; }
+    .banner-pendente { background: rgba(223,168,24,.14); border: 1px solid var(--gold); border-radius: 12px; padding: 12px 14px; margin: 0 auto 18px; max-width: 520px; color: var(--cream); font-size: .95rem; }
+    .banner-pendente button { margin-left: 8px; background: var(--gold); color: var(--navy-dark); border: none; border-radius: 20px; padding: 6px 14px; font-weight: 800; cursor: pointer; }
+    .qr { background: #fff; border-radius: 12px; padding: 10px; width: 230px; max-width: 100%; margin: 8px auto 12px; }
+    .qr svg { display: block; width: 100%; height: auto; }
+    .copia-cola { width: 100%; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .78rem; color: var(--cream); background: var(--navy); border: 1px solid rgba(255,255,255,.18); border-radius: 8px; padding: 8px; resize: none; height: 74px; margin-bottom: 10px; }
+    .pix-meta { color: var(--muted); font-size: .85rem; margin-top: 10px; }
+    .expira { text-align: center; color: var(--text-soft); font-size: .92rem; margin: -8px 0 14px; }
+    .expira b { color: var(--gold); }
+    .upload-box { background: var(--navy-dark); border: 1px solid rgba(255,255,255,.15); border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+    .upload-box h5 { color: var(--gold); font-size: 1rem; margin-bottom: 8px; }
+    .file-label { display: block; border: 2px dashed rgba(223,168,24,.6); border-radius: 10px; padding: 16px; text-align: center; color: var(--text-soft); cursor: pointer; margin-bottom: 10px; }
+    .file-label input { display: none; }
+    .ok-box { background: rgba(45,198,83,.12); border-left: 4px solid var(--ok); padding: 12px; border-radius: 8px; color: #d6f5de; margin-bottom: 14px; font-size: .95rem; }
+    .btn-whatsapp[aria-disabled="true"] { background: #3a4a66; color: #9aa6c0; cursor: not-allowed; pointer-events: none; }
+    .msg-preview { white-space: pre-line; background: #0b2a1a; border-left: 4px solid #25d366; border-radius: 8px; padding: 12px; color: #d6f5de; font-size: .9rem; margin-bottom: 10px; }
   </style>
 </head>
 <body>
@@ -146,7 +162,9 @@
       <img class="logo" src="/logo.png" alt="Escudo da Associação Futsal Resenha & Samba">
       <h1>Grande Festa do Futsal</h1>
       <p class="sub">A festa de encerramento do campeonato. Venha celebrar com a gente!</p>
-      <button class="btn js-comprar">🎟️ COMPRAR INGRESSOS</button>
+      <div id="bannerPendente" class="banner-pendente hidden"></div>
+      <button class="btn js-comprar">🎟️ COMPRAR INGRESSOS</button><br>
+      <button class="link-consulta js-consultar">Já fiz meu pedido: pagar ou enviar comprovante</button>
     </div>
   </header>
 
@@ -220,7 +238,7 @@
           <legend>Seus dados de sócio</legend>
           <div class="row2">
             <div class="field"><label for="socioNumero">Nº do sócio *</label><input id="socioNumero" inputmode="numeric" autocomplete="off"></div>
-            <div class="field"><label for="socioWhats">WhatsApp *</label><input id="socioWhats" type="tel" inputmode="tel" placeholder="(11) 99999-9999"></div>
+            <div class="field"><label for="socioWhats">WhatsApp *</label><input id="socioWhats" class="js-tel" type="tel" inputmode="numeric" placeholder="(11) 98765-4321"></div>
           </div>
           <div class="field"><label for="socioNome">Nome completo *</label><input id="socioNome" autocomplete="name"></div>
           <div class="field"><label for="socioRG">RG *</label><input id="socioRG" autocomplete="off"></div>
@@ -238,7 +256,7 @@
           <div class="field"><label for="compNome">Nome completo *</label><input id="compNome" autocomplete="name"></div>
           <div class="row2">
             <div class="field"><label for="compRG">RG *</label><input id="compRG" autocomplete="off"></div>
-            <div class="field"><label for="compWhats">WhatsApp *</label><input id="compWhats" type="tel" inputmode="tel" placeholder="(11) 99999-9999"></div>
+            <div class="field"><label for="compWhats">WhatsApp *</label><input id="compWhats" class="js-tel" type="tel" inputmode="numeric" placeholder="(11) 98765-4321"></div>
           </div>
         </fieldset>
 
@@ -261,243 +279,56 @@
         <button type="button" class="btn btn-ghost btn-block" id="btnVoltar" style="margin-top:10px;">← Voltar</button>
       </form>
 
-      <!-- ETAPA 3 -->
+      <!-- ETAPA 3: PEDIDO (novo ou resgatado) -->
       <div class="step hidden" id="step3">
         <div class="codigo"><small>Seu código de pedido</small><strong id="codigo">—</strong></div>
+        <p class="expira" id="expira"></p>
         <div class="resumo" id="resumoFinal"></div>
-        <ol class="steps-list">
-          <li>Faça o Pix do valor total para a chave abaixo.</li>
-          <li>Envie o comprovante pelo WhatsApp informando o código <b id="codigo2"></b>.</li>
-          <li>Após a confirmação, seus nomes entram na lista da portaria.</li>
-        </ol>
-        <div class="pix-box">
-          <div style="color:var(--text-soft);">Chave Pix (celular):</div>
-          <div class="pix-key" id="pixKey"></div>
-          <button class="btn-copy" id="btnCopiar">📋 COPIAR CHAVE PIX</button>
+
+        <div id="blocoStatus"></div>
+
+        <div id="blocoPix">
+          <div class="pix-box">
+            <div style="color:var(--text-soft);font-weight:700;">1. Pague com Pix</div>
+            <div class="qr" id="qr"></div>
+            <div style="color:var(--text-soft);font-size:.9rem;margin-bottom:6px;">Ou use o Pix copia e cola:</div>
+            <textarea class="copia-cola" id="copiaCola" readonly></textarea>
+            <button class="btn-copy" id="btnCopiar">📋 COPIAR CÓDIGO PIX</button>
+            <div class="pix-meta" id="pixMeta"></div>
+          </div>
         </div>
-        <a class="btn-whatsapp" id="btnWhatsapp" href="#" target="_blank" rel="noopener">💬 ENVIAR COMPROVANTE NO WHATSAPP</a>
-        <p class="small-note">O pedido fica <b>pendente</b> até a confirmação do pagamento. Pedidos sem pagamento em 5 dias são cancelados automaticamente. Anote seu código!</p>
+
+        <div id="blocoComprovante" class="upload-box">
+          <h5>2. Anexe o comprovante do Pix</h5>
+          <label class="file-label" id="fileLabel">📎 Toque para escolher a foto ou o PDF do comprovante
+            <input type="file" id="arquivo" accept="image/*,application/pdf">
+          </label>
+          <div class="error-box hidden" id="erroUp"></div>
+          <button class="btn btn-block" id="btnUpload" disabled>ENVIAR COMPROVANTE</button>
+        </div>
+
+        <div id="blocoWhats">
+          <div style="color:var(--gold);font-weight:700;margin-bottom:6px;">3. Avise pelo WhatsApp</div>
+          <div class="msg-preview" id="msgPreview"></div>
+          <a class="btn-whatsapp" id="btnWhatsapp" href="#" target="_blank" rel="noopener" aria-disabled="true">🔒 Anexe o comprovante para liberar o WhatsApp</a>
+        </div>
+
+        <p class="small-note">O pedido fica <b>pendente</b> até a conferência do pagamento pela organização. Pedidos sem comprovante em 5 dias expiram automaticamente. Guarde seu código!</p>
         <button class="btn btn-ghost btn-block" id="btnConcluir" style="margin-top:14px;">Fechar</button>
       </div>
+
+      <!-- CONSULTA DE PEDIDO -->
+      <form class="step hidden" id="stepConsulta" novalidate>
+        <h4>Recuperar meu pedido</h4>
+        <p class="small-note" style="text-align:left;margin:-6px 0 14px;">Informe o código recebido ao fazer o pedido (ex.: FUT-0042) e o WhatsApp usado na compra.</p>
+        <div class="field"><label for="cCodigo">Código do pedido *</label><input id="cCodigo" autocomplete="off" placeholder="FUT-0042" style="text-transform:uppercase"></div>
+        <div class="field"><label for="cWhats">WhatsApp *</label><input id="cWhats" class="js-tel" type="tel" inputmode="numeric" placeholder="(11) 98765-4321"></div>
+        <div class="error-box hidden" id="erroConsulta"></div>
+        <button type="submit" class="btn btn-block" id="btnConsultar">BUSCAR PEDIDO</button>
+      </form>
     </div>
   </div>
 
-  <script>
-    // ===== CONFIGURAÇÃO =====
-    const CONFIG = {
-      pixChave: '11989540444',
-      whatsappNumero: '5511989540444',
-      vendasAte: '2026-10-23T21:00:00-03:00',
-      precos: { adulto: 75, crianca6: 45, crianca0: 0 },
-      maxPessoas: 30
-    };
-    const FAIXAS = [
-      { v: 'adulto',   label: 'Adulto (12+) — R$ 75' },
-      { v: 'crianca6', label: 'Criança 6 a 11 — R$ 45' },
-      { v: 'crianca0', label: 'Criança 0 a 5 — grátis' }
-    ];
-
-    const $ = (id) => document.getElementById(id);
-    const brl = (n) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    let tipo = null;
-    let enviando = false;
-
-    // ----- Modal -----
-    function abrir() {
-      if (new Date() > new Date(CONFIG.vendasAte)) {
-        alertBox('As vendas pela página estão encerradas.');
-      }
-      $('overlay').classList.add('open');
-      document.body.classList.add('modal-open');
-    }
-    function fechar() {
-      $('overlay').classList.remove('open');
-      document.body.classList.remove('modal-open');
-    }
-    function alertBox(msg) { const e = $('erro'); e.textContent = msg; e.classList.remove('hidden'); }
-    function mostrar(stepId) {
-      ['step1', 'step2', 'step3'].forEach(s => $(s).classList.toggle('hidden', s !== stepId));
-      $('overlay').scrollTop = 0;
-    }
-    document.querySelectorAll('.js-comprar').forEach(b => b.addEventListener('click', abrir));
-    $('btnFechar').addEventListener('click', fechar);
-    $('btnConcluir').addEventListener('click', () => { fechar(); location.reload(); });
-    $('overlay').addEventListener('click', (e) => { if (e.target === $('overlay') && $('step3').classList.contains('hidden')) fechar(); });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fechar(); });
-
-    document.querySelectorAll('.choice button').forEach(b => b.addEventListener('click', () => {
-      tipo = b.dataset.tipo;
-      $('blocoSocio').classList.toggle('hidden', tipo !== 'socio');
-      $('blocoNaoSocio').classList.toggle('hidden', tipo !== 'nao-socio');
-      $('modalTitle').textContent = tipo === 'socio' ? 'Compra de sócio' : 'Compra de convidado';
-      $('erro').classList.add('hidden');
-      mostrar('step2');
-      calcular();
-    }));
-    $('btnVoltar').addEventListener('click', () => { $('modalTitle').textContent = 'Comprar ingressos'; mostrar('step1'); });
-
-    // ----- Convidados -----
-    function addGuest() {
-      const n = $('guests').children.length;
-      if (n + 1 >= CONFIG.maxPessoas) { alertBox('Limite de ' + CONFIG.maxPessoas + ' pessoas por pedido.'); return; }
-      const div = document.createElement('div');
-      div.className = 'guest';
-      div.innerHTML = `
-        <div class="guest-top"><strong>Pessoa</strong><button type="button">remover</button></div>
-        <div class="field"><label>Nome completo *</label><input class="g-nome" autocomplete="off"></div>
-        <div class="row2">
-          <div class="field"><label>Faixa etária *</label>
-            <select class="g-faixa">${FAIXAS.map(f => `<option value="${f.v}">${f.label}</option>`).join('')}</select>
-          </div>
-          <div class="field"><label class="g-rg-label">RG *</label><input class="g-rg" autocomplete="off"></div>
-        </div>`;
-      div.querySelector('.guest-top button').addEventListener('click', () => { div.remove(); renumerar(); calcular(); });
-      div.querySelector('.g-faixa').addEventListener('change', (e) => {
-        div.querySelector('.g-rg-label').textContent = e.target.value === 'crianca0' ? 'RG (opcional)' : 'RG *';
-        calcular();
-      });
-      $('guests').appendChild(div);
-      renumerar(); calcular();
-      div.querySelector('.g-nome').focus();
-    }
-    function renumerar() {
-      [...$('guests').children].forEach((g, i) => g.querySelector('.guest-top strong').textContent = 'Pessoa ' + (i + 1));
-    }
-    $('btnAddGuest').addEventListener('click', addGuest);
-    $('socioVai').addEventListener('change', calcular);
-
-    // ----- Coleta e cálculo -----
-    function coletarPessoas() {
-      const pessoas = [];
-      if (tipo === 'socio' && $('socioVai').checked) {
-        pessoas.push({ nome: $('socioNome').value.trim(), rg: $('socioRG').value.trim(), faixa: 'adulto', titular: true });
-      }
-      if (tipo === 'nao-socio') {
-        pessoas.push({ nome: $('compNome').value.trim(), rg: $('compRG').value.trim(), faixa: 'adulto', titular: true });
-      }
-      [...$('guests').children].forEach(g => pessoas.push({
-        nome: g.querySelector('.g-nome').value.trim(),
-        rg: g.querySelector('.g-rg').value.trim(),
-        faixa: g.querySelector('.g-faixa').value,
-        titular: false
-      }));
-      return pessoas;
-    }
-    function contar(pessoas) {
-      const q = { adulto: 0, crianca6: 0, crianca0: 0 };
-      pessoas.forEach(p => q[p.faixa]++);
-      q.total = q.adulto * CONFIG.precos.adulto + q.crianca6 * CONFIG.precos.crianca6;
-      return q;
-    }
-    function resumoHTML(q) {
-      let h = '';
-      if (q.adulto) h += `<div class="resumo-row"><span>Adultos (${q.adulto})</span><span>${brl(q.adulto * CONFIG.precos.adulto)}</span></div>`;
-      if (q.crianca6) h += `<div class="resumo-row"><span>Crianças 6 a 11 (${q.crianca6})</span><span>${brl(q.crianca6 * CONFIG.precos.crianca6)}</span></div>`;
-      if (q.crianca0) h += `<div class="resumo-row"><span>Crianças 0 a 5 (${q.crianca0})</span><span>GRÁTIS</span></div>`;
-      if (!h) h = `<div class="resumo-row"><span>Nenhuma pessoa cadastrada ainda</span><span></span></div>`;
-      h += `<div class="resumo-total"><span>TOTAL</span><span>${brl(q.total)}</span></div>`;
-      return h;
-    }
-    function calcular() { $('resumo').innerHTML = resumoHTML(contar(coletarPessoas())); }
-
-    // ----- Validação -----
-    function marcar(el, ok) { el.classList.toggle('invalid', !ok); return ok; }
-    const nomeOk = (s) => s.trim().split(/\s+/).length >= 2 && s.trim().length >= 5;
-    const rgOk = (s) => s.replace(/[^0-9a-zA-Z]/g, '').length >= 5;
-    const telOk = (s) => s.replace(/\D/g, '').length >= 10;
-
-    function validar() {
-      const erros = [];
-      const req = (id, fn, msg) => { if (!marcar($(id), fn($(id).value))) erros.push(msg); };
-      if (tipo === 'socio') {
-        req('socioNumero', v => v.trim().length > 0, 'Informe o número do sócio.');
-        req('socioNome', nomeOk, 'Informe o nome completo do sócio.');
-        req('socioRG', rgOk, 'Informe o RG do sócio.');
-        req('socioWhats', telOk, 'Informe um WhatsApp válido com DDD.');
-      } else {
-        req('amigoNumero', v => v.trim().length > 0, 'Informe o número do sócio que está te convidando.');
-        req('amigoNome', v => v.trim().length >= 3, 'Informe o nome do sócio que está te convidando.');
-        req('compNome', nomeOk, 'Informe seu nome completo.');
-        req('compRG', rgOk, 'Informe seu RG.');
-        req('compWhats', telOk, 'Informe um WhatsApp válido com DDD.');
-      }
-      [...$('guests').children].forEach((g, i) => {
-        const nome = g.querySelector('.g-nome'), rg = g.querySelector('.g-rg'), faixa = g.querySelector('.g-faixa').value;
-        if (!marcar(nome, nomeOk(nome.value))) erros.push(`Pessoa ${i + 1}: informe o nome completo.`);
-        const rgPreciso = faixa !== 'crianca0';
-        if (!marcar(rg, rgPreciso ? rgOk(rg.value) : true)) erros.push(`Pessoa ${i + 1}: RG obrigatório a partir de 6 anos.`);
-      });
-      const pessoas = coletarPessoas();
-      if (pessoas.length === 0) erros.push('Cadastre pelo menos uma pessoa para a festa.');
-      const rgs = pessoas.map(p => p.rg.replace(/[^0-9a-zA-Z]/g, '').toUpperCase()).filter(Boolean);
-      if (new Set(rgs).size !== rgs.length) erros.push('Há RGs repetidos no pedido.');
-      if (!$('lgpd').checked) erros.push('É preciso autorizar o uso dos dados (LGPD).');
-      return erros;
-    }
-
-    // ----- Envio -----
-    $('step2').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      if (enviando) return;
-      $('erro').classList.add('hidden');
-      if (new Date() > new Date(CONFIG.vendasAte)) { alertBox('As vendas pela página estão encerradas.'); return; }
-      const erros = validar();
-      if (erros.length) { alertBox(erros.slice(0, 4).join(' ')); return; }
-
-      const pessoas = coletarPessoas();
-      const payload = tipo === 'socio'
-        ? { tipo, socioNumero: $('socioNumero').value.trim(), socioNome: $('socioNome').value.trim(),
-            compradorNome: $('socioNome').value.trim(), compradorRG: $('socioRG').value.trim(), whatsapp: $('socioWhats').value.trim() }
-        : { tipo, socioNumero: $('amigoNumero').value.trim(), socioNome: $('amigoNome').value.trim(),
-            compradorNome: $('compNome').value.trim(), compradorRG: $('compRG').value.trim(), whatsapp: $('compWhats').value.trim() };
-      payload.pessoas = pessoas;
-      payload.lgpd = true;
-      payload.website = document.querySelector('[name=website]').value;
-
-      enviando = true;
-      const btn = $('btnEnviar');
-      btn.disabled = true; btn.textContent = 'Registrando pedido...';
-      try {
-        const r = await fetch('/api/pedido', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-        const data = await r.json().catch(() => ({}));
-        if (!r.ok || !data.codigo) throw new Error(data.erro || 'Não foi possível registrar o pedido. Tente novamente.');
-        concluir(data.codigo, data.total, pessoas, payload);
-      } catch (err) {
-        alertBox(err.message);
-        btn.disabled = false; btn.textContent = 'GERAR PEDIDO E PAGAR';
-        enviando = false;
-      }
-    });
-
-    function concluir(codigo, total, pessoas, payload) {
-      const q = contar(pessoas);
-      q.total = total;
-      $('codigo').textContent = codigo;
-      $('codigo2').textContent = codigo;
-      $('resumoFinal').innerHTML = resumoHTML(q);
-      $('pixKey').textContent = CONFIG.pixChave;
-      const msg = `Olá! Segue o comprovante do Pix da Festa do Futsal.\nPedido: ${codigo}\nNome: ${payload.compradorNome}\nSócio: ${payload.socioNumero}\nPessoas: ${pessoas.length}\nTotal: ${brl(total)}`;
-      const wa = $('btnWhatsapp');
-      if (CONFIG.whatsappNumero) {
-        wa.href = `https://wa.me/${CONFIG.whatsappNumero}?text=${encodeURIComponent(msg)}`;
-      } else {
-        wa.classList.add('hidden');
-      }
-      if (total === 0) {
-        document.querySelector('.pix-box').classList.add('hidden');
-      }
-      $('modalTitle').textContent = 'Pedido registrado ✅';
-      mostrar('step3');
-    }
-
-    $('btnCopiar').addEventListener('click', () => {
-      const ok = () => { $('btnCopiar').textContent = '✅ Chave copiada!'; setTimeout(() => $('btnCopiar').textContent = '📋 COPIAR CHAVE PIX', 2000); };
-      if (navigator.clipboard) navigator.clipboard.writeText(CONFIG.pixChave).then(ok).catch(fallback); else fallback();
-      function fallback() {
-        const t = document.createElement('textarea'); t.value = CONFIG.pixChave; document.body.appendChild(t); t.select();
-        try { document.execCommand('copy'); ok(); } catch (_) {} t.remove();
-      }
-    });
-  </script>
+  <script src="/app.js"></script>
 </body>
 </html>
