@@ -16,7 +16,10 @@ export default async function handler(req, res) {
     participantes.forEach(p => {
       const pid = p.fields['Pedido'][0];
       (porPedido[pid] ||= []).push({
+        id: p.id,
         nome: p.fields['Nome completo'] || '',
+        entrou: !!p.fields['Entrou'],
+        entradaEm: p.fields['Entrada em'] || null,
         rg: p.fields['RG'] || '',
         faixa: p.fields['Faixa etária'] || '',
         titular: !!p.fields['Titular do pedido']

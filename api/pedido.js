@@ -1,5 +1,6 @@
 // POST /api/pedido — registra um pedido (Pendente) e seus participantes no Airtable
-import { airtable, TABELA_PEDIDOS, TABELA_PARTICIPANTES, PRECOS, FAIXA_LABEL, limpar, normRG } from './_airtable.js';
+import { airtable, TABELA_PEDIDOS, TABELA_PARTICIPANTES, PRECOS, FAIXA_LABEL, limpar, normRG, formatarWhats, resumoPedido } from './_airtable.js';
+import { gerarPix } from './_pix.js';
 
 const VENDAS_ATE = new Date(process.env.VENDAS_ATE || '2026-10-23T21:00:00-03:00');
 const MAX_PESSOAS = 30;
@@ -22,14 +23,14 @@ export default async function handler(req, res) {
     const socioNome = limpar(b.socioNome);
     const compradorNome = limpar(b.compradorNome);
     const compradorRG = normRG(b.compradorRG);
-    const whatsapp = limpar(b.whatsapp, 25);
+    const whatsapp = formatarWhats(b.whatsapp);
     const erros = [];
     if (!tipo) erros.push('Tipo de compra inválido.');
     if (!socioNumero) erros.push('Número do sócio obrigatório.');
     if (socioNome.length < 3) erros.push('Nome do sócio obrigatório.');
     if (compradorNome.split(' ').length < 2) erros.push('Nome completo do comprador obrigatório.');
     if (compradorRG.replace(/[^0-9A-Z]/g, '').length < 5) erros.push('RG do comprador obrigatório.');
-    if (whatsapp.replace(/\D/g, '').length < 10) erros.push('WhatsApp inválido.');
+    if (!whatsapp) erros.push('WhatsApp inválido: informe um celular com DDD, no formato (11) 98765-4321.');
     if (b.lgpd !== true) erros.push('Consentimento LGPD obrigatório.');
 
     const pessoasIn = Array.isArray(b.pessoas) ? b.pessoas : [];
@@ -68,7 +69,7 @@ export default async function handler(req, res) {
             'Crianças 6-11': q.crianca6,
             'Crianças 0-5': q.crianca0,
             'Valor total': total,
-            'Status': 'Pendente',
+            'Status': total > 0 ? 'Pendente' : 'Pago', // pedido só com crianças 0-5 não tem o que pagar
             'Consentimento LGPD': true
           }
         }]
@@ -102,13 +103,11 @@ export default async function handler(req, res) {
       throw err;
     }
 
-    // Código gerado por fórmula no Airtable (FUT-0001); relê para garantir
-    let codigo = rec.fields['Código'];
-    if (!codigo) {
-      const again = await airtable(`${TABELA_PEDIDOS}/${rec.id}`);
-      codigo = again.fields['Código'];
-    }
-    return res.status(200).json({ codigo, total });
+    // Código e data de expiração vêm de fórmulas do Airtable; relê o registro
+    const again = await airtable(`${TABELA_PEDIDOS}/${rec.id}`);
+    const resumo = resumoPedido(again);
+    const pix = total > 0 ? gerarPix(total, resumo.codigo) : null;
+    return res.status(200).json({ ...resumo, pix });
   } catch (err) {
     console.error('[pedido]', err);
     return res.status(500).json({ erro: 'Não foi possível registrar o pedido agora. Tente novamente em instantes.' });
